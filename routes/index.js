@@ -2,7 +2,7 @@ const util = require('util');
 const router = require('koa-router')();
 const request = util.promisify(require('request'));
 const getClosestColor = require('../libs/get-closest-color-2');
-const parseColors = require('../libs/parseColors');
+const parseColors = require('../libs/parse-colors');
 const COLORS = require('../vars/colors2');
 
 
@@ -35,7 +35,7 @@ router.get('/', async (ctx, next) => {
 	const colorStrArr = rawColorStrArr.map((str) => {
 		return str.match(/\d+,\d+,\d+/)[0];
 	});
-	const parseColors = colorStrArr.map(getClosestColor);
+	const parseColors = colorStrArr.map((str) => getClosestColor(colors, str));
 	const resColors = {};
 	parseColors.forEach((color, index) => {
 		if(resColors[color] === undefined) {
@@ -51,15 +51,17 @@ router.get('/', async (ctx, next) => {
 			resColors[color]['percent'] = resColors[color]['count'] / parseColors.length	
 		}
 	});
-
-	parseColors = parseColors.sort((a, b) => {
-		return a.count - b.count;
+	let resColorsArr = Object.values(resColors);
+console.log(resColorsArr);
+	resColorsArr = resColorsArr.sort((a, b) => {
+		return b.count - a.count;
 	});
 
-	const previewHtml = parseColors.map((obj) => {
-		return `<td style="background: rgb(${obj.color})">&nbsp;</td>`;
+	const previewHtml = resColorsArr.map((obj) => {
+		return `<td width="${obj.percent * 100}%" style="background: ${obj.color}">&nbsp;</td>`;
 	});
-	ctx.body = `<table><tr>${previewHtml}</tr></table>`;
+	const content = `<table style="width: 100%; border-spacing: 0;"><tr>${previewHtml.join('')}</tr></table>`;
+	await ctx.render('index', { content });
 })
 
 
