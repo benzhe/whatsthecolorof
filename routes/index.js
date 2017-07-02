@@ -1,8 +1,7 @@
 const util = require('util');
 const router = require('koa-router')();
 const request = util.promisify(require('request'));
-const COLORS = require('../vars/colors');
-
+const COLORS = require('../vars/colors2');
 
 function parseColors(colors) {
 	const newColors = new Map();
@@ -46,25 +45,22 @@ function getClosestColor(sourceColorStr, factor) {
 }
 
 function getClosestColor2(sourceColorStr, factor) {
-	factor = factor || 40;
+	factor = factor || 1;
 	const sourceColor = sourceColorStr.split(',').map((num) => parseInt(num, 10));
 //	console.log(sourceColor);
 	let minusIndex = null;
 	let minusName = null;
 	let minusDelta = null;
 	colors.forEach((destColorName, destColor) => {
-//		console.log(destColor);
-		const deltaR = sourceColor[0] - destColor[0];
-		let deltaG = sourceColor[1] - destColor[1];
-		let deltaB = sourceColor[2] - destColor[2];
-		if (deltaR * deltaG <= 0) deltaG = deltaG * deltaG;
-		if (deltaR * deltaB <= 0) deltaB = deltaB * deltaB;
-		const delta = Math.abs(deltaR) + Math.abs(deltaG) + Math.abs(deltaB);
+		const deltaR = Math.pow(Math.abs(sourceColor[0] - destColor[0]) * (1 + sourceColor[0] / 255), 4);
+		const deltaG = Math.pow(Math.abs(sourceColor[1] - destColor[1]) * (1 + sourceColor[1] / 255), 4);
+		const deltaB = Math.pow(Math.abs(sourceColor[2] - destColor[2]) * (1 + sourceColor[2] / 255), 4);
+		const delta = deltaR + deltaG + deltaB;
 		if (delta < minusDelta || minusDelta === null) {
 			minusDelta = delta;
 			minusIndex = destColor;
 			minusName = destColorName;
-		}			
+		}		
 	});
 //	console.log(minusName, minusIndex, minusDelta);
 	return minusName;
@@ -104,6 +100,7 @@ router.get('/', async (ctx, next) => {
 	const parseColors3 = colorStrArr.map((str) => getClosestColor(str, 3));
 	const parseColors4 = colorStrArr.map((str) => getClosestColor2(str));
 	const resColors = {};
+	const resColors2 = {};
 	parseColors2.forEach((color) => {
 		if(resColors[color] === undefined) {
 			resColors[color] = 1;
@@ -112,19 +109,25 @@ router.get('/', async (ctx, next) => {
 			resColors[color] += 1;
 		}
 	});
+	parseColors4.forEach((color) => {
+		if(resColors2[color] === undefined) {
+			resColors2[color] = 1;
+		}
+		else {
+			resColors2[color] += 1;
+		}
+	});
 //	return ctx.body = resColors;
 	const previewHtml = colorStrArr.map((colorStr, index) => {
 //		const color = getClosestColor(colorStr);
 		return `
 		<table width=100><tr>
 			<td style="background: rgb(${colorStrArr[index]})">&nbsp;</td>
-			<td style="height: 24px; background: ${parseColors[index]}">&nbsp;</td>
 			<td style="height: 24px; background: ${parseColors2[index]}">&nbsp;</td>
-			<td style="height: 24px; background: ${parseColors3[index]}">&nbsp;</td>
 			<td style="height: 24px; background: ${parseColors4[index]}">&nbsp;</td>
 		</tr></table>`;
 	});
-	ctx.body = `<p>${JSON.stringify(resColors)}</p>${previewHtml.join('')}`;
+	ctx.body = `<p>${JSON.stringify(resColors)}</p><p>${JSON.stringify(resColors2)}</p>${previewHtml.join('')}`;
 })
 
 router.get('/string', async (ctx, next) => {
