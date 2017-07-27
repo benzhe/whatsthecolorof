@@ -130,7 +130,7 @@ router.get('/json', async (ctx, next) => {
   }
 })
 
-router.get('/health', async (ctx, next => {
+router.get('/health', async (ctx, next) => {
 	ctx.body = 'OK';
 })
 
