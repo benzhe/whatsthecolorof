@@ -2,6 +2,9 @@
   "name": "whatsthecolorof",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+  	"node": "~8.1.2"
+  },
   "scripts": {
     "start": "node bin/www",
     "dev": "PORT=8080 ./node_modules/.bin/nodemon bin/www",
