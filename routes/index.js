@@ -10,6 +10,9 @@ const colors = parseColors(COLORS);
 
 router.get('/', async (ctx, next) => {
 	const query = ctx.query.q;
+	if(!query) {
+		return ctx.body = "404";
+	}
 	const qs = {
 		newwindow: 1,
 		tbm: 'isch',
